@@ -57,14 +57,14 @@ public class ItemControllerTest {
 	@Test
 	public void getAllItems() {
 		webTestClient.get().uri(ItemConstants.ITEM_END_POINT_V1).exchange().expectStatus().isOk().expectHeader()
-				.contentType(APPLICATION_JSON_UTF8).expectBodyList(Item.class).hasSize(4);
+				.contentType(MediaType.APPLICATION_JSON).expectBodyList(Item.class).hasSize(4);
 
 	}
 
 	@Test
 	public void getAllItems_approach2() {
 		webTestClient.get().uri(ItemConstants.ITEM_END_POINT_V1).exchange().expectStatus().isOk().expectHeader()
-				.contentType(MediaType.APPLICATION_JSON_UTF8).expectBodyList(Item.class).hasSize(4)
+				.contentType(MediaType.APPLICATION_JSON).expectBodyList(Item.class).hasSize(4)
 				.consumeWith((response) -> {
 					List<Item> items = response.getResponseBody();
 					items.forEach((item) -> {
@@ -77,7 +77,7 @@ public class ItemControllerTest {
 	@Test
 	public void getAllItems_approach3() {
 		Flux<Item> fluxItems = webTestClient.get().uri(ItemConstants.ITEM_END_POINT_V1).exchange().expectStatus().isOk()
-				.expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8).returnResult(Item.class).getResponseBody();
+				.expectHeader().contentType(MediaType.APPLICATION_JSON).returnResult(Item.class).getResponseBody();
 
 		StepVerifier.create(fluxItems.log("value from network : ")).expectNextCount(4).verifyComplete();
 

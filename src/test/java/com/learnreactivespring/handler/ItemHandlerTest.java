@@ -1,6 +1,5 @@
 package com.learnreactivespring.handler;
 
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,6 +20,7 @@ import com.learnreactivespring.document.Item;
 import com.learnreactivespring.repository.ItemReactiveRepository;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -28,7 +28,7 @@ import reactor.core.publisher.Flux;
 @DirtiesContext
 @ActiveProfiles("test")
 public class ItemHandlerTest {
-	
+
 	@Autowired
 	WebTestClient webTestClient;
 
@@ -51,9 +51,60 @@ public class ItemHandlerTest {
 
 	@Test
 	public void getAllItems() {
-		webTestClient.get().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1).exchange().expectStatus().isOk().expectHeader()
-				.contentType(MediaType.APPLICATION_JSON).expectBodyList(Item.class).hasSize(4);
+		webTestClient.get().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1).exchange().expectStatus().isOk()
+				.expectHeader().contentType(MediaType.APPLICATION_JSON).expectBodyList(Item.class).hasSize(4);
 
+	}
+
+	@Test
+	public void getItemById() {
+		webTestClient.get().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1.concat("/{id}"), "ABC").exchange()
+				.expectStatus().isOk().expectBody().jsonPath("$.price", 149.99);
+	}
+
+	@Test
+	public void getItemById_notFound() {
+		webTestClient.get().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1.concat("/{id}"), "DEF").exchange()
+				.expectStatus().isNotFound();
+	}
+
+	@Test
+	public void createItem() {
+
+		Item item = new Item(null, "Iphone X", 999.99);
+
+		webTestClient.post().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1)
+				.contentType(MediaType.APPLICATION_JSON_UTF8).body(Mono.just(item), Item.class).exchange()
+				.expectStatus().isOk().expectBody().jsonPath("$.id").isNotEmpty().jsonPath("$.description")
+				.isEqualTo("Iphone X").jsonPath("$.price").isEqualTo(999.99);
+
+	}
+
+	@Test
+	public void deleteById() {
+		webTestClient.delete().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1.concat("/{id}"), "ABC")
+				.accept(MediaType.APPLICATION_JSON).exchange().expectStatus().isOk().expectBody(Void.class);
+	}
+
+	@Test
+	public void updateItem() {
+		double newPrice = 129.99;
+		Item item = new Item(null, "Beats HeadPhones", newPrice);
+
+		webTestClient.put().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1.concat("/{id}"), "ABC")
+				.contentType(MediaType.APPLICATION_JSON_UTF8).accept(MediaType.APPLICATION_JSON_UTF8)
+				.body(Mono.just(item), Item.class).exchange().expectStatus().isOk().expectBody()
+				.jsonPath("$.price", newPrice);
+	}
+
+	@Test
+	public void updateItem_notFound() {
+		double newPrice = 129.99;
+		Item item = new Item(null, "Beats HeadPhones", newPrice);
+
+		webTestClient.put().uri(ItemConstants.ITEM_FUNCTIONAL_END_POINT_V1.concat("/{id}"), "DEF")
+				.contentType(MediaType.APPLICATION_JSON_UTF8).accept(MediaType.APPLICATION_JSON_UTF8)
+				.body(Mono.just(item), Item.class).exchange().expectStatus().isNotFound();
 	}
 
 }
